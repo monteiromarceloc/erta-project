@@ -19,13 +19,33 @@ export default function App() {
     <View style={styles.container}>
       <StatusBar style="auto" />
 
-      <TouchableOpacity style={styles.button} onPress={onPress('F')}>
-        <Text style={styles.label} >Frente</Text>
-      </TouchableOpacity>
+      <View style={styles.buttoncontainer}>
+        <TouchableOpacity style={styles.button} onPress={onPress('F')}>
+          <Text style={styles.label} >Frente</Text>
+        </TouchableOpacity>
+      </View>
 
-      <TouchableOpacity style={styles.button} onPress={onPress('T')}>
-        <Text style={styles.label}>Trás</Text>
-      </TouchableOpacity>
+      <View style={styles.buttoncontainer}>
+        <TouchableOpacity style={styles.button} onPress={onPress('D')}>
+          <Text style={styles.label} >Direita</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.button} onPress={onPress('S')}>
+          <Text style={styles.label}>Frear
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.button} onPress={onPress('E')}>
+          <Text style={styles.label}>Esquerda</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.buttoncontainer}>
+        <TouchableOpacity style={styles.button} onPress={onPress('T')}>
+          <Text style={styles.label}>Trás</Text>
+        </TouchableOpacity>
+      </View>
+
     </View>
   );
 }
@@ -33,7 +53,7 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -41,10 +61,13 @@ const styles = StyleSheet.create({
     padding: 10,
     height: 100,
     width: 100,
-    backgroundColor: '#12A',
+    backgroundColor: '#AAA',
     alignItems: 'center',
     justifyContent: 'center',
-    margin: 20
+    margin: 20,
+  },
+  buttoncontainer: {
+    flexDirection: 'row'
   },
   label: {
     color: '#FFF',
