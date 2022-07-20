@@ -1,30 +1,39 @@
-#include <BearSSLHelpers.h>
-#include <ESP8266WiFiGratuitous.h>
-#include <WiFiServerSecureBearSSL.h>
-#include <ESP8266WiFiScan.h>
-#include <WiFiUdp.h>
-#include <ESP8266WiFiAP.h>
-#include <ESP8266WiFiSTA.h>
-#include <ESP8266WiFiGeneric.h>
-#include <ESP8266WiFiType.h>
-#include <ESP8266WiFiMulti.h>
-#include <CertStoreBearSSL.h>
-#include <WiFiClientSecureBearSSL.h>
-#include <ESP8266WiFi.h>
-#include <WiFiServerSecure.h>
-#include <WiFiServer.h>
-#include <WiFiClient.h>
-#include <ArduinoWiFiServer.h>
-#include <WiFiClientSecure.h>
+#include <WiFi.h>
+#include <HCSR04.h>
 
-String ssid = "1104";
-String password = "65496549";
+#define gpio_1_N_motor      23
+#define gpio_1_P_motor      22
+#define gpio_2_N_motor      19
+#define gpio_2_P_motor      21
+
+#define LED_PIN   14
+
+#define PIN_TRIGGER   5
+#define PIN_ECHO      18
+#define MIN_DIST      30
+
+bool has_stoped = false;
+
+const char* ssid = "Marcelo's Galaxy M32";
+const char* password = "11111111";
 
 WiFiServer server(80);
+HCSR04 hc(PIN_TRIGGER, PIN_ECHO);
+ 
+/* Função: controle um motor (freia, movimento anti-horário, movimento horário
+ *         ou ponto morto)
+ * Parâmetros: motor a ser controlado e ação desejada
+ * Retorno: nenhum
+ */
 
 void setup() {
+  pinMode(gpio_1_N_motor, OUTPUT);
+  pinMode(gpio_1_P_motor, OUTPUT);
+  pinMode(gpio_2_N_motor, OUTPUT);
+  pinMode(gpio_2_P_motor, OUTPUT);
+  pinMode(LED_PIN, OUTPUT);
+    
   Serial.begin(115200);
-  pinMode(13, OUTPUT);
   delay(100);
   
   Serial.println();
@@ -41,6 +50,7 @@ void setup() {
 
   Serial.print("Connected, IP address: ");
   Serial.println(WiFi.localIP());
+  digitalWrite(LED_PIN, HIGH);
 
   server.begin();
 
@@ -49,12 +59,31 @@ void setup() {
 int value = 0;
 
 void loop() {
+
+  if (hc.dist() < MIN_DIST) {
+    Serial.print("distancia: ");
+    Serial.println( hc.dist() );
+    delay(100);
+    if (!has_stoped) {
+      Serial.println("Obstáculo identificado");
+      digitalWrite(gpio_1_N_motor, HIGH);
+      digitalWrite(gpio_1_P_motor, HIGH);
+           
+      digitalWrite(gpio_2_N_motor, HIGH);
+      digitalWrite(gpio_2_P_motor, HIGH);
+      has_stoped = true; 
+    }
+  } else {
+    has_stoped = false;
+  }  
+  
   WiFiClient client = server.available();
 
   if (client) {
     Serial.println("New Client.");
     String currentLine = "";
     while(client.connected()) {
+      
       if(client.available()) {
         char c = client.read();
         
@@ -75,22 +104,57 @@ void loop() {
           currentLine += c;
         }
 
-        
-        // Process request
-        if(currentLine.endsWith("GET /F")) {
-          Serial.println("Ligando motores pra frente");
+        // Aciona motores
+        if(currentLine.endsWith("GET /F") && !has_stoped) {
+
+          
+            Serial.println("Ligando motores pra frente");
+            digitalWrite(gpio_1_N_motor, LOW);
+            digitalWrite(gpio_1_P_motor, HIGH);
+           
+            digitalWrite(gpio_2_N_motor, LOW);
+            digitalWrite(gpio_2_P_motor, HIGH);
+            break;
         }
         
         if(currentLine.endsWith("GET /T")) {
           Serial.println("Ligando motores pra tras");
+          digitalWrite(gpio_1_P_motor, LOW);
+            digitalWrite(gpio_1_N_motor, HIGH);
+           
+            digitalWrite(gpio_2_P_motor, LOW);
+            digitalWrite(gpio_2_N_motor, HIGH);
+            break;
         }
         
         if(currentLine.endsWith("GET /D")) {
-          Serial.println("Ligando motores pra direita");
+          Serial.println("Ligando motores pra direita");          
+           digitalWrite(gpio_1_N_motor, HIGH);
+            digitalWrite(gpio_1_P_motor, LOW);
+           
+            digitalWrite(gpio_2_N_motor, LOW);
+            digitalWrite(gpio_2_P_motor, HIGH);
+            break;
         }
         
         if(currentLine.endsWith("GET /E")) {
           Serial.println("Ligando motores pra esquerda");
+          digitalWrite(gpio_1_N_motor, LOW);
+            digitalWrite(gpio_1_P_motor, HIGH);
+           
+            digitalWrite(gpio_2_N_motor, HIGH);
+            digitalWrite(gpio_2_P_motor, LOW);
+            break;
+        }
+
+        if(currentLine.endsWith("GET /S")) {
+          Serial.println("Freando motores");
+            digitalWrite(gpio_1_N_motor, HIGH);
+            digitalWrite(gpio_1_P_motor, HIGH);
+           
+            digitalWrite(gpio_2_N_motor, HIGH);
+            digitalWrite(gpio_2_P_motor, HIGH);
+            break;
         }
       }
     }
